@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1 class="text-center">{{ series.title }} Details</h1>
+        <hr>
+
+        <div class="row">
+            <div class="col-md-6">
+
+                <iframe width="100%" height="500px" src="{{ series.trailer_url }}" frameborder="0" allowfullscreen></iframe>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card" style="background-color: black; color: white;">
+                    <img src="{{ url_for('static', filename=series.img) }}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <p class="card-text">{{ series.description }}</p>
+                        <p class="average-rating">Average Rating: {{ series.average_rating }}</p>
+
+                        <h3>Comments</h3>
+                        <ul class="list-group">
+                            {% for comment in comments %}
+                                <li class="list-group-item">{{ comment.text }} - {{ comment.user.username }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        {% if current_user.is_authenticated %}
+                            <form method="post" action="{{ url_for('series_details', series_id=series.id) }}" class="mt-3">
+                                <div class="mb-3">
+                                    <label for="comment_text" class="form-label">Add a Comment:</label>
+                                    <textarea class="form-control" id="comment_text" name="comment_text" rows="3" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit Comment</button>
+                            </form>
+                        {% else %}
+                            <p>Login to leave a comment.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

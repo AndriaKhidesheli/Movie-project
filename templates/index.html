@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">Movie List</h1>
+    <hr>
+
+    <form action="{{ url_for('home') }}" method="get" class="mb-4">
+        <label for="genre" class="form-label">Filter by Genre:</label>
+        <select name="genre" id="genre" class="form-select">
+            <option value="" selected>All Genres</option>
+            <option value="Action">Action</option>
+            <option value="Drama">Drama</option>
+            <option value="Comedy"> Comedy</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Apply Filter</button>
+    </form>
+
+    <div class="row align-items-center">
+        {% for movie in movies %}
+        <div class="card" style="width: 18rem; margin: 6px; margin-left: 20px; height: 800px; background-color: black; color: white;">
+            <img src="{{ url_for('static', filename=movie.img) }}" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">{{ movie.title }}</h5>
+                <p class="card-text">{{ movie.description }}</p>
+                <p class="average-rating">Average Rating: {{ movie.average_rating }}</p>
+
+                <a href="{{ url_for('movie_details', movie_id=movie.id) }}" class="btn btn-primary">See More</a>
+
+                <form class="rating-form" data-movie-id="{{ movie.id }}">
+                    {% if current_user.is_authenticated %}
+                    <label for="rating">Rate this movie (1-5 stars):</label>
+                    <select name="rating" class="rating-select" id="rating">
+                        {% for i in range(1, 6) %}
+                        <option value="{{ i }}">{{ i }} star{{ 's' if i > 1 else '' }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="submit-rating btn btn-success">Submit Rating</button>
+                    {% endif %}
+                </form>
+
+                <a href="{{ url_for('watch_movie', movie_id=movie.id) }}" class="btn btn-primary">Watch</a>
+
+                {% if current_user.role == "admin" %}
+                <a href="{{ url_for('delete_product', index=movie.id) }}" class="btn btn-danger">Delete</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Add event listener to submit rating asynchronously
+        document.querySelectorAll(".rating-form").forEach(function(form) {
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const movieId = form.getAttribute("data-movie-id");
+                const rating = form.querySelector(".rating-select").value;
+
+                // Make an AJAX request to submit the rating
+                fetch(`/watch_movie/${movieId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: `rating=${rating}`
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          // Update the displayed average rating
+                          const averageRatingElement = form.closest(".card").querySelector(".average-rating");
+                          averageRatingElement.innerText = `Average Rating: ${data.average_rating.toFixed(2)}`;
+                          alert("Rating submitted successfully!");
+                      } else {
+                          alert("Failed to submit rating. Please try again.");
+                      }
+                  })
+                  .catch(error => {
+                      console.error("Error:", error);
+                  });
+            });
+        });
+    });
+</script>
+{% endblock %}

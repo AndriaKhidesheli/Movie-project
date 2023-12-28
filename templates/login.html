@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    {% for field, errors in form.errors.items() %}
+    {% for error in errors %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endfor %}
+    {% endfor %}
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-danger">
+        {{ message }}
+
+    </div>
+    {% endfor %}
+
+    <form method="post">
+        {{ form.hidden_tag() }}
+        {{form.username(class="form-control mt-2", placeholder=form.username.label.text) }}
+        {{form.password(class="form-control mt-2",placeholder=form.password.label.text) }}
+        <br>
+        {{ form.submit(class="btn btn-success") }}
+    </form>
+</div>
+{% endblock %}

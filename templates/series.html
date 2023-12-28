@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">Series List</h1>
+    <hr>
+
+    <form action="{{ url_for('series') }}" method="get" class="mb-4">
+        <label for="genre" class="form-label">Filter by Genre:</label>
+        <select name="genre" id="genre" class="form-select">
+            <option value="" selected>All Genres</option>
+             
+            {% for genre in genres %}
+            <option value="{{ genre }}">{{ genre }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Apply Filter</button>
+    </form>
+
+    <div class="row align-items-center">
+        {% for series in series %}
+        <div class="card"
+             style="width: 18rem; margin: 6px; margin-left: 20px; height: 800px; background-color: black; color: white;">
+            <img src="{{ url_for('static', filename=series.img) }}" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">{{ series.title }}</h5>
+                <p class="card-text">{{ series.description }}</p>
+                <p class="average-rating">Average Rating: {{ series.average_rating }}</p>
+
+                <a href="{{ url_for('series_details', series_id=series.id) }}" class="btn btn-primary">Details</a>
+                <div class="rating-container" data-series-id="{{ series.id }}">
+                    {% for i in range(1, 6) %}
+                    {% if i <= series.average_rating %}
+                    <i class="fas fa-star" style="color: gold;"></i>
+                    {% else %}
+                    <i class="far fa-star" style="color: gold;"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if current_user.is_authenticated %}
+                <form class="rating-form" data-series-id="{{ series.id }}">
+                    <label for="rating">Rate this series (1-5 stars):</label>
+                    <select name="rating" class="rating-select" id="rating">
+                        {% for i in range(1, 6) %}
+                        <option value="{{ i }}">{{ i }} star{{ 's' if i > 1 else '' }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="submit-rating btn btn-success">Submit Rating</button>
+                </form>
+                {% endif %}
+
+                <a href="{{ url_for('watch_series', series_id=series.id) }}" class="btn btn-primary">Watch</a>
+
+                {% if current_user.role == "admin" %}
+                <a href="{{ url_for('delete_series', index=series.id) }}" class="btn btn-danger">Delete</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Add event listener to submit rating asynchronously
+        document.querySelectorAll(".rating-form").forEach(function(form) {
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const seriesId = form.getAttribute("data-series-id");
+                const rating = form.querySelector(".rating-select").value;
+
+                // Make an AJAX request to submit the rating
+                fetch(`/watch_series/${seriesId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: `rating=${rating}`
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          // Update the displayed average rating
+                          const averageRatingElement = form.closest(".card").querySelector(".average-rating");
+                          averageRatingElement.innerText = `Average Rating: ${data.average_rating.toFixed(2)}`;
+                          alert("Rating submitted successfully!");
+                      } else {
+                          alert("Failed to submit rating. Please try again.");
+                      }
+                  })
+                  .catch(error => {
+                      console.error("Error:", error);
+                  });
+            });
+        });
+    });
+</script>
+{% endblock %}
